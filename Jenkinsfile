@@ -33,6 +33,7 @@ pipeline {
       steps {
         xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {
           sh "bundle exec rspec"
+          step([$class: 'GitHubCommitStatusSetter'])
         }
       }
     }
