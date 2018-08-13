@@ -9,6 +9,10 @@ pipeline {
     }
 
     stage('Test') {
+      agent {
+        label 'rails'
+      }
+      
       steps {
         echo 'Testing...'
         step([$class: 'GitHubSetCommitStatusBuilder'])
