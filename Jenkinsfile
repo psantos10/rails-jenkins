@@ -1,5 +1,5 @@
 pipeline {
-  agent rails
+  agent none
 
   stages {
     stage('Build') {
