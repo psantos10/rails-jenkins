@@ -1,6 +1,10 @@
 pipeline {
   agent none
 
+  triggers {
+    githubPush()
+  }
+
   stages {
     stage('Build') {
       steps {
@@ -12,7 +16,7 @@ pipeline {
       agent {
         label 'rails'
       }
-      
+
       steps {
         echo 'Testing...'
         step([$class: 'GitHubSetCommitStatusBuilder'])
@@ -23,6 +27,15 @@ pipeline {
       steps {
         echo 'Deploying...'
       }
+    }
+  }
+
+  post {
+    success {
+        setBuildStatus("Build succeeded", "SUCCESS");
+    }
+    failure {
+        setBuildStatus("Build failed", "FAILURE");
     }
   }
 }
