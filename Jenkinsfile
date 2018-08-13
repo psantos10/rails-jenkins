@@ -27,9 +27,9 @@ pipeline {
       agent {
         label 'rails'
       }
-      
+
       xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {
-        sh "bundle exec rspec
+        sh "bundle exec rspec"
       }
     }
 
