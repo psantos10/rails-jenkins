@@ -17,9 +17,11 @@ pipeline {
         label 'rails'
       }
 
-      xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {\
-        sh "gem install bundler"
-        sh "bundle install --jobs=4"
+      steps {
+        xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {\
+          sh "gem install bundler"
+          sh "bundle install --jobs=4"
+        }
       }
     }
 
@@ -28,8 +30,10 @@ pipeline {
         label 'rails'
       }
 
-      xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {
-        sh "bundle exec rspec"
+      steps {
+        xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {
+          sh "bundle exec rspec"
+        }
       }
     }
 
