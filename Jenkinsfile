@@ -1,48 +1,46 @@
-def getCommitSha() {
-  sh "git rev-parse HEAD > .git/current-commit"
-  return readFile(".git/current-commit").trim()
-}
+pipeline {
+  agent none
 
-def getRepoURL() {
-  sh "git config --get remote.origin.url > .git/remote-url"
-  return readFile(".git/remote-url").trim()
-}
-
-def setBuildStatus(message, state) {
-  repoUrl = getRepoURL()
-  commitSha = getCommitSha()
-  step([
-      $class: "GitHubCommitStatusSetter",
-      commitShaSource: [$class: "ManuallyEnteredShaSource", sha: commitSha],
-      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: 'continuous-integration/jenkins/tests'],
-      reposSource: [$class: "ManuallyEnteredRepositorySource", url: repoUrl],
-      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-  ]);
-}
-
-node('rails') {
-  currentBuild.result = "SUCCESS"
-  try {
-      stage('Checkout'){
-        checkout scm
-        setBuildStatus('Checking out code', 'PENDING')
-      }
-
-      stage('Test'){
-        setBuildStatus('Running tests', 'PENDING')
-        // sh './scripts/jenkins/docker-run.sh /bin/bash -c "./scripts/run-tests.sh"'
-        echo "Testing..."
-      }
+  triggers {
+    githubPush()
   }
-  catch (err) {
-      currentBuild.result = "FAILURE"
-      throw err
-  } finally {
-    if (currentBuild.result == "SUCCESS") {
-      setBuildStatus('All good!', "SUCCESS")
-    } else {
-      setBuildStatus('Tests are failing!', "FAILURE")
+
+  stages {
+    stage('Build') {
+      steps {
+        echo 'Building...'
+      }
+    }
+
+    stage('Installing dependencies') {
+      agent {
+        label 'rails'
+      }
+
+      steps {
+        xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {\
+          sh "gem install bundler"
+          sh "bundle install --jobs=4"
+        }
+      }
+    }
+
+    stage('Test') {
+      agent {
+        label 'rails'
+      }
+
+      steps {
+        xingRubyVersion(rubyVersionFile: '.ruby-version', sharedEnvironment: false) {
+          sh "bundle exec rspec"
+        }
+      }
+    }
+
+    stage('Deploy') {
+      steps {
+        echo 'Deploying...'
+      }
     }
   }
 }
